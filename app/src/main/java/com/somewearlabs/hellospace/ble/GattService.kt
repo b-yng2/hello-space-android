@@ -42,6 +42,13 @@ import java.util.*
  * </pre>
  */
 class GattService : Service() {
+    private object ServiceProfile {
+        val serviceUUID = UUID.fromString("BEFDFF20-C979-11E1-9B21-0800200C9A66")
+        val summaryDataUUID = UUID.fromString("BEFDFF60-C979-11E1-9B21-0800200C9A66")
+        val updatePeriodUUID= UUID.fromString("BEFDFFA0-C979-11E1-9B21-0800200C9A66")
+//        val genericAccessUUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
+        val updatePeriodBytes = byteArrayOf(3.toByte(), 0)  // 3 seconds
+    }
 
     private var serverManager: ServerManager? = null
 
@@ -144,31 +151,23 @@ class GattService : Service() {
         }
     }
 
-    private object ServiceProfile {
-        val serviceUUID = UUID.fromString("BEFDFF20-C979-11E1-9B21-0800200C9A66")
-        val charUUID = UUID.fromString("BEFDFF60-C979-11E1-9B21-0800200C9A66")
-    }
-
     /*
      * Manages the entire GATT service, declaring the services and characteristics on offer
      */
     private class ServerManager(val context: Context) : BleServerManager(context), ServerObserver {
-        private val updatePeriodUUID = UUID.fromString("BEFDFFA0-C979-11E1-9B21-0800200C9A66")
 
-        private val gattCharacteristic = characteristic(
-                ServiceProfile.charUUID,
+        private val summaryDataChar = characteristic(
+                ServiceProfile.summaryDataUUID,
                 BluetoothGattCharacteristic.PROPERTY_NOTIFY,
                 BluetoothGattCharacteristic.PERMISSION_READ,  // permissions
                 cccd(), updatePeriodDescriptor() // descriptors
         )
 
-        val emitFrequency = 3 // in seconds
-
         private val serverConnections = mutableMapOf<String, ServerConnection>()
 
         fun setCharacteristicValue(bytes: ByteArray) {
             log.debug("setCharacteristicValue: did update char; bytes=${bytes.contentToString()}")
-            gattCharacteristic.value = bytes
+            summaryDataChar.value = bytes
             serverConnections.values.forEach { serverConnection ->
                 serverConnection.sendNotificationForMyGattCharacteristic(bytes)
             }
@@ -181,7 +180,7 @@ class GattService : Service() {
 
         override fun initializeServer(): List<BluetoothGattService> {
             setServerObserver(this)
-            return listOf(service(ServiceProfile.serviceUUID, gattCharacteristic))
+            return listOf(service(ServiceProfile.serviceUUID, summaryDataChar))
         }
 
         override fun onServerReady() {
@@ -208,9 +207,9 @@ class GattService : Service() {
         }
 
         private fun updatePeriodDescriptor(): BluetoothGattDescriptor {
-            return descriptor(updatePeriodUUID,
+            return descriptor(ServiceProfile.updatePeriodUUID,
                     BluetoothGattDescriptor.PERMISSION_READ or BluetoothGattDescriptor.PERMISSION_WRITE,
-                    byteArrayOf(emitFrequency.toByte(), 0)   // 3 seconds
+                    ServiceProfile.updatePeriodBytes
             )
         }
 
@@ -226,7 +225,7 @@ class GattService : Service() {
             }
 
             override fun getGattCallback(): BleManagerGattCallback {
-                gattCallback = GattCallback(gattCharacteristic)
+                gattCallback = GattCallback(summaryDataChar)
                 return gattCallback!!
             }
 
