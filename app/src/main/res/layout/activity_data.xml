@@ -16,6 +16,30 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"/>
 
+    <EditText
+        android:id="@+id/editTextGattCharacteristicValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="none"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="Hex value to emit from characteristic"
+        android:inputType="text"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/waypointIntentButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/emitCharValueButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Emit Value"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/editTextGattCharacteristicValue"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
     <com.somewearlabs.somewearui.api.SomewearStatusBarView
         android:id="@+id/statusBarView"
         android:layout_width="match_parent"
