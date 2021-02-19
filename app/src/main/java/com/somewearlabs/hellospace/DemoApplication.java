@@ -14,6 +14,7 @@ public class DemoApplication extends Application {
 
         // Initialize SomewearUI
         SomewearUIProperties properties = new SomewearUIProperties(this);
+        properties.setForceFirmwareUpdate(true);
         SomewearUI.setup(properties);
     }
 }

@@ -1,6 +1,10 @@
 package com.somewearlabs.hellospace.data;
 
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -19,6 +23,7 @@ import com.somewearlabs.somewearcore.api.MessagePayload;
 import com.somewearlabs.somewearcore.api.SomewearDevice;
 import com.somewearlabs.somewearcore.common.EmailAddress;
 import com.somewearlabs.somewearui.api.SomewearStatusBarView;
+import com.somewearlabs.somewearui.api.SomewearUI;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,14 +48,19 @@ public class DataActivity extends AppCompatActivity {
         userItemSource = new UserItemSource(this::userItemsDidUpdate);
 
         // Configure buttons
+        Button waypointIntentButton = findViewById(R.id.waypointIntentButton);
         Button sendMessageButton = findViewById(R.id.sendMessageButton);
         Button sendDataButton = findViewById(R.id.sendDataButton);
+        waypointIntentButton.setOnClickListener(v -> sendWaypointToSomewear());
         sendMessageButton.setOnClickListener(v -> sendMessage());
         sendDataButton.setOnClickListener(v -> sendData());
 
         // Configure status bar view
         SomewearStatusBarView statusBarView = findViewById(R.id.statusBarView);
         statusBarView.setPresenter(this);
+
+        // Handle firmware updates
+        SomewearUI.getInstance().configureFirmwareUpdateHandling(this);
 
         // Configure UserItem list
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
@@ -59,6 +69,12 @@ public class DataActivity extends AppCompatActivity {
         recyclerView.addItemDecoration(new DividerItemDecoration(recyclerView.getContext(), DividerItemDecoration.VERTICAL));
 
         disposable.addAll(
+                device.getFirmwareUpdateStatus()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(status -> {
+                            Log.d("DataActivity", "firmwareUpdateStatus=" + status);
+                        }),
+
                 // Observe connectivity changes
                 device.getConnectionState()
                         .observeOn(AndroidSchedulers.mainThread())
@@ -97,6 +113,29 @@ public class DataActivity extends AppCompatActivity {
 
         // show outbound payloads as soon as we hand them off to be sent.
         userItemSource.createOrUpdateUserItem(message);
+    }
+
+    private void sendWaypointToSomewear() {
+        double latitude = 34.035251;
+        double longitude = -118.481247;
+        long timestamp = new Date().getTime();
+        String name = "Test Waypoint";
+        String notes = "Here are some optional notes";
+
+        Intent intent = new Intent("com.somewearlabs.action.SEND");
+//        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setType("application/vnd.somewear.waypoint");
+        intent.putExtra("latitude", latitude);
+        intent.putExtra("longitude", longitude);
+        intent.putExtra("timestamp", timestamp);
+        intent.putExtra("name", name);
+        intent.putExtra("notes", notes);
+
+        List<ResolveInfo> activities = getPackageManager().queryIntentActivities(intent, 0);
+        if (activities.isEmpty()) return;
+
+        startActivity(intent);
     }
 
     private void sendData() {

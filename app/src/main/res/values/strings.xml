@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Hello Space</string>
     <string name="scan_button">Toggle Scan</string>
+    <string name="waypoint_intent_button">Share Waypoint Intent</string>
     <string name="send_button">Send Message</string>
     <string name="send_location_button">Send Location</string>
     <string name="send_data_button">Send Data</string>

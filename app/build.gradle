@@ -26,7 +26,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.aar'])
 
     // Somewear
-    implementation ('com.somewearlabs:somewear-ui:0.10.2')
+    implementation ('com.somewearlabs:somewear-ui:0.10.3') { changing = true }
 
     // Protobuf
     implementation "com.google.protobuf:protobuf-lite:3.0.1"
@@ -48,7 +48,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
 }
 
-//configurations.all {
-//    // Check for updates every build
-//    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-//}
+configurations.all {
+    // Check for updates every build
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
