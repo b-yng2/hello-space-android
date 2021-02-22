@@ -22,15 +22,18 @@ import com.somewearlabs.somewearcore.api.*
 import com.somewearlabs.somewearcore.api.DeviceConnectionState.Connected
 import com.somewearlabs.somewearui.api.SomewearUI
 import com.somewearlabs.uicomponent.extension.onClick
+import io.reactivex.Observable.interval
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class DataActivity : AppCompatActivity() {
     private val device: SomewearDevice = SomewearDevice.instance
     private val disposable = CompositeDisposable()
     private val recyclerViewAdapter = SimpleRecyclerViewAdapter()
     private var gattServiceConn: GattServiceConn? = null
+    private val dataGenerator = interval(5, TimeUnit.SECONDS)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +76,12 @@ class DataActivity : AppCompatActivity() {
         recyclerView.adapter = recyclerViewAdapter
         recyclerView.addItemDecoration(DividerItemDecoration(recyclerView.context, DividerItemDecoration.VERTICAL))
         disposable.addAll(
+                dataGenerator.observeOn(AndroidSchedulers.mainThread()).subscribe { _ ->
+                    if (gattServiceConn != null) {
+                        Log.d("DataActivity", "will send fake data")
+                        gattServiceConn?.binding?.setCharacteristicValue(createZephyrData())
+                    }
+                },
                 device.firmwareUpdateStatus
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe { status: FirmwareUpdateStatus -> Log.d("DataActivity", "firmwareUpdateStatus=$status") },  // Observe connectivity changes
@@ -130,6 +139,32 @@ class DataActivity : AppCompatActivity() {
 //
 //        // show outbound payloads as soon as we hand them off to be sent.
 //        userItemSource!!.createOrUpdateUserItem(message)
+    }
+
+    private fun createZephyrData(): ByteArray {
+        val bytes = ByteArray(20)
+        bytes[0] = 1        // version
+        bytes[1] = 0        // status msb
+        bytes[2] = 0        // status lsb
+        bytes[3] = 98       // heart rate
+        bytes[4] = 22       // breathing rate msb
+        bytes[5] = 0        // breathing rate lsb
+        bytes[6] = 20       // device temp msb
+        bytes[7] = 0        // device temp msb
+        bytes[8] = 0        // posture msb
+        bytes[9] = 0        // posture lsb
+        bytes[10] = 0       // activity msb
+        bytes[11] = 0       // activity lsb
+        bytes[12] = 0       // heart rate variability msb
+        bytes[13] = 0       // heart rate variability lsb
+        bytes[14] = 88      // battery
+        bytes[15] = 99      // heart rate confidence
+        bytes[16] = 98      // breathing rate confidence
+        bytes[17] = 0       // heat stress level
+        bytes[18] = 0       // physiological strain index
+        bytes[19] = -40      // core temperature
+
+        return bytes
     }
 
     private fun sendWaypointToSomewear() {
