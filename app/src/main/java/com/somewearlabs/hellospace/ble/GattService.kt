@@ -46,7 +46,8 @@ class GattService : Service() {
         val serviceUUID = UUID.fromString("BEFDFF20-C979-11E1-9B21-0800200C9A66")
         val summaryDataUUID = UUID.fromString("BEFDFF60-C979-11E1-9B21-0800200C9A66")
         val updatePeriodUUID= UUID.fromString("BEFDFFA0-C979-11E1-9B21-0800200C9A66")
-//        val genericAccessUUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
+        val genericAccessUUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb")
+        val peripheralPreferredUUID = UUID.fromString("00002a04-0000-1000-8000-00805f9b34fb")
         val updatePeriodBytes = byteArrayOf(3.toByte(), 0)  // 3 seconds
     }
 
@@ -163,6 +164,12 @@ class GattService : Service() {
                 cccd(), updatePeriodDescriptor() // descriptors
         )
 
+        private val peripheralPreferredChar = characteristic(
+                ServiceProfile.peripheralPreferredUUID,
+                BluetoothGattCharacteristic.PROPERTY_READ,
+                BluetoothGattCharacteristic.PERMISSION_READ
+        )
+
         private val serverConnections = mutableMapOf<String, ServerConnection>()
 
         fun setCharacteristicValue(bytes: ByteArray) {
@@ -180,7 +187,11 @@ class GattService : Service() {
 
         override fun initializeServer(): List<BluetoothGattService> {
             setServerObserver(this)
-            return listOf(service(ServiceProfile.serviceUUID, summaryDataChar))
+            return listOf(
+                    service(ServiceProfile.serviceUUID, summaryDataChar),
+                    // Doesn't seem to work. System probably overrides
+//                    service(ServiceProfile.genericAccessUUID, peripheralPreferredChar)
+            )
         }
 
         override fun onServerReady() {
